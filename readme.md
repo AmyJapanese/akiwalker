@@ -31,7 +31,7 @@ Yes / No の質問をランダムに投げて推測します。
 ### 1. リポジトリをクローン
 
 ```bash
-git clone https://github.com/yourname/akiwalker.git
+git clone https://github.com/AmyJapanese/akiwalker.git
 cd akiwalker
 ````
 
@@ -100,3 +100,4 @@ python akiwalker.py
 ## ライセンス
 
 MIT License
+
