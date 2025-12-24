@@ -29,6 +29,42 @@ TOP_N = 5 #最大の行数
 id_to_name = {c["id"]: c["name"] for c in characters}
 
 # -------------------------
+# alive_idが持つ属性集め
+# -------------------------
+
+def collect_true_attributes(characters, alive_ids):
+    attrs = set()
+    for c in characters:
+        if c["id"] not in alive_ids:
+            continue
+        for attr, value in c["attributes"].items():
+            if value is True:
+                attrs.add(attr)
+    return attrs
+
+# -------------------------
+# 質問候補作成
+# -------------------------
+
+def select_next_question(characters, alive_ids, unused_questions, questions):
+    true_attrs = collect_true_attributes(characters, alive_ids)
+
+    # 質問に使える属性だけ残す
+    candidates = [
+        attr for attr in true_attrs
+        if attr in unused_questions and attr in questions
+    ]
+
+    # 候補があればそこから選ぶ
+    if candidates:
+        return random.choice(candidates)
+
+    # なければフォールバック（完全ランダム）
+    return random.choice(list(unused_questions))
+
+
+
+# -------------------------
 # 判別式
 # -------------------------
 
@@ -63,7 +99,12 @@ for i in range(MAX_QUESTIONS):
     if len(alive_ids) == 1:
         break
 
-    attr = random.choice(unused_questions)
+    attr = select_next_question(
+        characters,
+        alive_ids,
+        unused_questions,
+        questions
+    )
     unused_questions.remove(attr)
 
     answer = ask_yes_no(questions[attr]["text"])
@@ -105,6 +146,8 @@ for i in range(MAX_QUESTIONS):
         if ranked[0][1] - ranked[1][1] >= WIN_DIFF:
             break
 
+    if (i + 1) % 5 == 0: #5問ごとに候補を表示
+        print(f"\n--- 現在の候補数：{len(alive_ids)} 人 ---\n")
 # -------------------------
 # 結果表示
 # -------------------------
