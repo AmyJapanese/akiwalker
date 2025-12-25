@@ -33,7 +33,7 @@ Yes / No の質問をランダムに投げて推測します。
 ```bash
 git clone https://github.com/AmyJapanese/akiwalker.git
 cd akiwalker
-````
+```
 
 ### 2. data を用意する
 

@@ -23,8 +23,8 @@ scores = {c["id"]: 0 for c in characters}
 alive_ids = {c["id"] for c in characters}
 unused_questions = list(questions.keys())
 
-MAX_QUESTIONS = 20
-WIN_DIFF = 3  # 1位と2位の差で確定
+MAX_QUESTIONS = len(questions)
+WIN_DIFF = 5  # 1位と2位の差で確定
 TOP_N = 5 #最大の行数
 id_to_name = {c["id"]: c["name"] for c in characters}
 
@@ -62,28 +62,56 @@ def select_next_question(characters, alive_ids, unused_questions, questions):
     # なければフォールバック（完全ランダム）
     return random.choice(list(unused_questions))
 
-
-
 # -------------------------
-# 判別式
+# 判別式（5段階・属性は True/False）
 # -------------------------
 
-def update_score(character, attr, answer):
-    value = character["attributes"].get(attr, False)
-    return 1 if value == answer else -1
+def update_score(character, attr, answer_value):
+    # わからないは即スキップ
+    if answer_value == 0:
+        return 0
+
+    # JSONに無い属性は False 扱い
+    char_value = character["attributes"].get(attr, False)
+
+    # プレイヤー回答が肯定側か否定側か
+    answer_is_positive = answer_value > 0  # はい / 多分そう
+    answer_strength = abs(answer_value)    # 1 or 2
+
+    # キャラ属性と一致しているか
+    if char_value == answer_is_positive:
+        return answer_strength
+    else:
+        return -answer_strength
 
 # -------------------------
-# yes / no 入力
+# 5段階入力
 # -------------------------
 
-def ask_yes_no(text):
+def ask_answer(text):
+    prompt = (
+        f"{text}\n"
+        "  [y] はい\n"
+        "  [p] 多分そう\n"
+        "  [u] わからない\n"
+        "  [m] 多分違う\n"
+        "  [n] いいえ\n"
+        "> "
+    )
+
     while True:
-        ans = input(f"{text} (y/n): ").lower()
+        ans = input(prompt).lower()
         if ans in ("y", "yes"):
-            return True
+            return 2
+        if ans in ("p", "probably", "maybe"):
+            return 1
+        if ans in ("u", "unknown", "idk"):
+            return 0
+        if ans in ("m", "probably_not"):
+            return -1
         if ans in ("n", "no"):
-            return False
-        print("y か n で答えてね")
+            return -2
+        print("y / p / u / m / n のどれかで答えてね")
 
 # -------------------------
 # メインループ
@@ -107,7 +135,7 @@ for i in range(MAX_QUESTIONS):
     )
     unused_questions.remove(attr)
 
-    answer = ask_yes_no(questions[attr]["text"])
+    answer = ask_answer(questions[attr]["text"])
 
     # スコア更新（生存者のみ）
     for c in characters:
@@ -157,9 +185,9 @@ winner = next(c for c in characters if c["id"] == winner_id)
 
 print("\n=== 推測結果 ===")
 print(f"あなたが思い浮かべているのは…")
-print(f"👉 {winner['name']} ではありませんか？")
+print(f"→ {winner['name']} ではありませんか？")
 
-print("\n（スコア TOP）")
+print("\n（スコア）")
 
 ranked = sorted(
     ((cid, scores[cid]) for cid in alive_ids),
@@ -167,9 +195,6 @@ ranked = sorted(
     reverse=True
 )
 
-for cid, score in ranked[:TOP_N]:
-    print(f"{id_to_name[cid]}: {score}")
-
-rest = len(ranked) - TOP_N
-if rest > 0:
-    print(f"...他 {rest} 件")
+for cid, score in ranked:
+    name = next(c["name"] for c in characters if c["id"] == cid)
+    print(f"{name}: {score}")
