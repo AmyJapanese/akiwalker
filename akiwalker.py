@@ -88,9 +88,9 @@ def update_score(character, attr, answer_value):
 # 5段階入力
 # -------------------------
 
-def ask_answer(text):
+def ask_answer(text ,question_number):
     prompt = (
-        f"{text}\n"
+        f"Q.{question_number}.{text}\n"
         "  [y] はい\n"
         "  [p] 多分そう\n"
         "  [u] わからない\n"
@@ -135,7 +135,7 @@ for i in range(MAX_QUESTIONS):
     )
     unused_questions.remove(attr)
 
-    answer = ask_answer(questions[attr]["text"])
+    answer = ask_answer(questions[attr]["text"], i+1)
 
     # スコア更新（生存者のみ）
     for c in characters:
